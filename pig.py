@@ -120,16 +120,28 @@ def record():
 def play(x: int = 1, ignore_time=False):
     """ Reproduce the commands x times."""
     wait_ready()
+    stop = [False]
 
+    def on_release(key):
+        if key == keyboard.Key.esc:
+            stop.append(True)
+            return False
+
+    sleep(1)
     print(f"Playing {x} times...")
-    for i in range(x):
-        previus_time = 0
-        for c in commands:
-            if previus_time:
-                sleep((c.time - previus_time) * (0.01 if ignore_time else 1))
-            previus_time = c.time
-            c.method(*c.args)
-    print("Finished Playing...")
+    with keyboard.Listener(on_release=on_release):
+        for i in range(x):
+            previus_time = 0
+            for c in commands:
+                if any(stop):
+                    break
+                if previus_time:
+                    sleep((c.time - previus_time) * (0.01 if ignore_time else 1))
+                previus_time = c.time
+                c.method(*c.args)
+            if any(stop):
+                break
+        print("Finished Playing...")
 
 
 def validate():
